@@ -1,0 +1,65 @@
+name: Finalize Release (auto version)
+
+# Manually triggered - but with NO typed inputs. Run this from the Actions
+# tab, select the release branch (e.g. release/1.2.0) in the branch
+# dropdown, and click "Run workflow". That branch selection is what gets
+# checked out and finalized.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify this is a release branch
+        run: |
+          if [[ ! "${{ github.ref_name }}" =~ ^main/.+ ]]; then
+            echo "::error::This workflow can only be run against a main/* branch. You selected: '${{ github.ref_name }}'. Re-run it and pick a release/* branch from the branch dropdown."
+            exit 1
+          fi
+          echo "OK: running against release branch '${{ github.ref_name }}'"
+
+      - name: Checkout selected release branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}   # needs push rights to master/develop, see notes
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 19
+          cache: maven
+          server-id: github
+
+      - name: Configure Git
+        run: |
+          git config user.name "venuchalla"
+          git config user.email "venuchalla1993@gmail.com"
+
+      # -----------------------------------------------------------------
+      # 2. Build and deploy. If this step fails, the job stops here -
+      #    nothing below (merge, tag) ever runs.
+      # -----------------------------------------------------------------
+      - name: Build and deploy final artifact
+        run: mvn -B clean deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}:latest .
+          docker push ghcr.io/${{ github.repository }}:latest
