@@ -17,8 +17,8 @@ jobs:
     steps:
       - name: Verify this is a release branch
         run: |
-          if [[ ! "${{ github.ref_name }}" =~ ^main/.+ ]]; then
-            echo "::error::This workflow can only be run against a main/* branch. You selected: '${{ github.ref_name }}'. Re-run it and pick a release/* branch from the branch dropdown."
+          if [[ ! "${{ github.ref_name }}" == ^main/.+ ]]; then
+            echo "::error::This workflow can only be run against a main/* branch. You selected: '${{ github.ref_name }}'. Re-run it and pick a main/* branch from the branch dropdown."
             exit 1
           fi
           echo "OK: running against release branch '${{ github.ref_name }}'"
