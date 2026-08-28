@@ -24,7 +24,7 @@
 		<connection/>
 		<developerConnection/>
 		<tag/>
-		<url/>
+		<url>https://github.com/venuchalla/first-application.git</url>
 	</scm>
 	<properties>
 		<java.version>19</java.version>
@@ -80,7 +80,18 @@
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 	</dependencies>
+	<distributionManagement>
+		<repository>
 
+			<id>github</id>
+			<url>https://maven.pkg.github.com/venuchalla/first-application</url>
+		</repository>
+
+		<snapshotRepository>
+			<id>github</id>
+			<url>https://maven.pkg.github.com/venuchalla/first-application</url>
+		</snapshotRepository>
+	</distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
