@@ -72,19 +72,19 @@ jobs:
 
          - name: Tag image for ECR
            env:
-             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
 
            run: |
              docker tag \
-               "${{ inputs.ghcr-image }}" \
-               "$ECR_REGISTRY/${{ inputs.ecr-repository }}:${GITHUB_SHA}"
+               "$GHCR_IMAGE" \
+               "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}"
 
          - name: Push image to ECR
            env:
              ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
            run: |
              docker push \
-               "$ECR_REGISTRY/${{ inputs.ecr-repository }}:${GITHUB_SHA}"
+               "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}"
              
              echo "Image successfully copied from GHCR to ECR"
-             echo "ECR image: $ECR_REGISTRY/${{ inputs.ecr-repository }}:${GITHUB_SHA}"
+             echo "ECR image: $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}"
