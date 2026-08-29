@@ -34,6 +34,12 @@ jobs:
     build-and-push:
       runs-on: ubuntu-latest
       steps:
+         - name: Show GitHub OIDC context
+           run: |
+             echo "Repository: $GITHUB_REPOSITORY"
+             echo "Branch: $GITHUB_REF_NAME"
+             echo "Ref: $GITHUB_REF"
+             echo "Event: $GITHUB_EVENT_NAME"
          - name: Login to GHCR
            uses: docker/login-action@v3
            with:
