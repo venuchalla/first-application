@@ -52,6 +52,19 @@ jobs:
             #aws-secret-access-key: ${{ secrets.AWS_ECR_ACCESS_SECRET }}
             aws-region: ${{ inputs.aws-region }}
             role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.aws-role-name }}
+         - name: Verify AWS login and branch
+           run: |
+            echo "======================================"
+            echo "GitHub Branch: $GITHUB_REF_NAME"
+            echo "GitHub Ref:    $GITHUB_REF"
+            echo "======================================"
+        
+            if aws sts get-caller-identity; then
+               echo "AWS LOGIN: SUCCESS"
+            else
+            echo "AWS LOGIN: FAILED"
+            exit 1
+            fi
 
          - name: Login to Amazon ECR
            id: login-ecr
