@@ -1,23 +1,74 @@
 name: Copy Docker Image from GitHub Container Registry to Amazon ECR
 
 on:
-  workflow_dispatch:
+    workflow_dispatch:
+      inputs:
+        aws-account-id:
+          description: 'AWS Account ID'
+          required: true
+          type: string
+
+        aws-region:
+          description: 'AWS Region'
+          required: true
+          default: 'us-east-1'
+          type: string
+
+        aws-role-name:
+          description: 'AWS IAM Role Name'
+          required: true
+          default: 'github-actions-ecr-role'
+          type: string
 
 permissions:
-  id-token: write
-  contents: read
+    id-token: write
+    contents: read
 
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: test/firstapplication
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "us-east-1"
+    build-and-push:
+      runs-on: ubuntu-latest
+      steps:
+         - name: Login to GHCR
+           uses: docker/login-action@v3
+           with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+
+         - name: Pull image from GHCR
+           run: |
+               docker pull "${{ inputs.ghcr-image }}"     
+
+         - name: Configure AWS credentials
+           uses: aws-actions/configure-aws-credentials@v4
+           with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: ${{ inputs.aws-region }}
+            role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.aws-role-name }}
+
+         - name: Login to Amazon ECR
+           id: login-ecr
+           uses: aws-actions/amazon-ecr-login@v2
+
+         - name: Tag image for ECR
+           env:
+             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+           run: |
+             docker tag \
+               "${{ inputs.ghcr-image }}" \
+               "$ECR_REGISTRY/${{ inputs.ecr-repository }}:${GITHUB_SHA}"
+
+         - name: Push image to ECR
+           env:
+             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+           run: |
+             docker push \
+               "$ECR_REGISTRY/${{ inputs.ecr-repository }}:${GITHUB_SHA}"
+             
+             echo "Image successfully copied from GHCR to ECR"
+             echo "ECR image: $ECR_REGISTRY/${{ inputs.ecr-repository }}:${GITHUB_SHA}"
