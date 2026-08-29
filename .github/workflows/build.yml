@@ -1,4 +1,4 @@
-name: Finalize Release (auto version)
+name: Build and Deploy to GitHub Container Registry
 
 # Manually triggered - but with NO typed inputs. Run this from the Actions
 # tab, select the release branch (e.g. release/1.2.0) in the branch
