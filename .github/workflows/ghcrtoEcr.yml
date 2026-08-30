@@ -50,7 +50,17 @@ jobs:
 
          - name: Pull image from GHCR
            run: |
-               docker pull "$GHCR_IMAGE"     
+               docker pull "$GHCR_IMAGE"    
+
+         - name: Decode OIDC Token (debug)
+           run: |
+             TOKEN=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" \
+               -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+             echo "Full token response:"
+             echo "$TOKEN" | jq .
+             echo ""
+             echo "Decoded payload:"
+             echo "$TOKEN" | jq -r '.value' | cut -d. -f2 | base64 -d 2>/dev/null | jq .
 
          - name: Configure AWS credentials
            uses: aws-actions/configure-aws-credentials@v4
@@ -88,7 +98,7 @@ jobs:
 
          - name: Push image to ECR
            env:
-             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+             ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
            run: |
              docker push \
                "$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}"
