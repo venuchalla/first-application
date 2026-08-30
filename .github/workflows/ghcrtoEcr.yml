@@ -5,6 +5,7 @@ on:
       inputs:
         aws-account-id:
           description: 'AWS Account ID'
+          default: '750737256421'
           required: true
           type: string
 
